@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuestionario Avanzado de Redes (Módulos 5-9)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        main {
+            width: 100%;
+            max-width: 800px;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 20px 40px;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 10px;
+        }
+        /* -- Setup Screen -- */
+        #setup-container label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+        #num-questions-input {
+            width: 100px;
+            padding: 8px;
+            font-size: 1em;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #start-btn {
+            background-color: #28a745;
+            font-size: 1.1em;
+        }
+        #start-btn:hover {
+            background-color: #218838;
+        }
+        /* -- Quiz Screen -- */
+        #question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #555;
+            font-size: 0.9em;
+        }
+        #module-name {
+            font-weight: bold;
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+        #question-content p {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        #question-content label {
+            display: block;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        #question-content label:hover {
+            background-color: #f1f1f1;
+        }
+        #question-content label.selected {
+            background-color: #e6f7ff;
+            border-color: #007bff;
+        }
+        /* -- Feedback & Buttons -- */
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .btn {
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background-color 0.2s ease;
+            font-size: 1em;
+        }
+        #validate-btn {
+            background-color: #007bff;
+        }
+        #validate-btn:hover {
+            background-color: #0056b3;
+        }
+        #next-btn {
+            background-color: #17a2b8;
+        }
+        #next-btn:hover {
+            background-color: #117a8b;
+        }
+        #validate-btn:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        /* -- Results Screen -- */
+        #score-text {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+        }
+        .chart-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            display: flex;
+            height: 30px;
+            margin-top: 20px;
+            overflow: hidden;
+            font-size: 0.9em;
+        }
+        .chart-bar-correct {
+            background-color: #28a745;
+            text-align: center;
+            color: white;
+            line-height: 30px;
+            transition: width 0.5s ease-in-out;
+        }
+        .chart-bar-incorrect {
+            background-color: #dc3545;
+            text-align: center;
+            color: white;
+            line-height: 30px;
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div id="setup-container" class="container">
+            <h1>Cuestionario de Práctica (Módulos 5-9)</h1>
+            <p>Este cuestionario tiene un banco de 40 preguntas. Elige cuántas preguntas quieres responder en esta sesión.</p>
+            
+            <label for="num-questions-input">Número de preguntas:</label>
+            <input type="number" id="num-questions-input" value="10" min="1" max="40">
+            <span id="max-questions-label">/ 40</span>
+            
+            <button id="start-btn" class="btn">Comenzar Cuestionario</button>
+        </div>
+
+        <div id="quiz-container" class="container" style="display:none;">
+            <div id="question-header">
+                <span id="module-name"></span>
+                <span id="question-counter"></span>
+            </div>
+            
+            <div id="question-content">
+                </div>
+            
+            <button id="validate-btn" class="btn">Validar</button>
+            <button id="next-btn" class="btn" style="display:none;">Siguiente</button>
+            
+            <div id="feedback-div" class="feedback"></div>
+        </div>
+
+        <div id="results-container" class="container" style="display:none;">
+            <h3>Resultados Finales</h3>
+            <p id="score-text"></p>
+            <div class="chart-container">
+                <div class="chart-bar-correct" id="chart-correct"></div>
+                <div class="chart-bar-incorrect" id="chart-incorrect"></div>
+            </div>
+            <button id="restart-btn" class="btn" style="background-color:#6c757d; margin-top: 20px;">Volver a Empezar</button>
+        </div>
+    </main>
+
+    <script>
+        const questionBank = [
+            // --- Módulo 5: NAT ---
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "¿Qué terminología de NAT describe la dirección IP privada de un dispositivo *dentro* de la red local?",
+                opciones: {
+                    A: "Inside Global",
+                    B: "Inside Local",
+                    C: "Outside Local",
+                    D: "Outside Global"
+                },
+                correcta: "B",
+                explicacion: "La dirección 'Inside Local' (Local Interna) es la dirección IP privada real del dispositivo en la red interna. [cite: 176, 187]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "Estás configurando una traducción 1 a 1 permanente para un servidor web público. ¿Qué tipo de NAT deberías usar?",
+                opciones: {
+                    A: "NAT Estático",
+                    B: "NAT Dinámico",
+                    C: "PAT",
+                    D: "NAT64"
+                },
+                correcta: "A",
+                explicacion: "La NAT Estática (Static NAT) utiliza una asignación uno a uno fija entre una dirección local y una global, lo cual es útil para servidores que deben ser accesibles desde Internet. [cite: 199, 200]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "¿Cuál es la principal desventaja de usar NAT?",
+                opciones: {
+                    A: "Oculta las direcciones IPv4 de los usuarios.",
+                    B: "Conserva las direcciones IPv4 públicas.",
+                    C: "Se pierde el direccionamiento y la trazabilidad de extremo a extremo (end-to-end).",
+                    D: "Aumenta la flexibilidad de las conexiones."
+                },
+                correcta: "C",
+                explicacion: "Una de las desventajas de NAT es que se pierde el direccionamiento de extremo a extremo, lo que puede complicar ciertos protocolos. [cite: 260, 261]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "Al configurar PAT (Sobrecarga) en un router Cisco para usar la IP de la interfaz de salida, ¿qué palabra clave se añade al comando `ip nat inside source list`?",
+                opciones: {
+                    A: "dynamic",
+                    B: "overload",
+                    C: "interface",
+                    D: "pat"
+                },
+                correcta: "B",
+                explicacion: "Para configurar PAT y que múltiples hosts compartan una IP, se añade la palabra clave 'overload' al final del comando de configuración de NAT. [cite: 426, 428]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "¿Qué comando de verificación usarías para ver las traducciones NAT activas en un router?",
+                opciones: {
+                    A: "show ip nat statistics",
+                    B: "show ip nat translations",
+                    C: "show running-config",
+                    D: "show ip interface brief"
+                },
+                correcta: "B",
+                explicacion: "El comando `show ip nat translations` muestra las traducciones NAT activas (estáticas y dinámicas) que están ocurriendo en el router. [cite: 290, 291]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "¿Qué tipo de NAT utiliza un *grupo* (pool) de direcciones públicas y las asigna por orden de llegada?",
+                opciones: {
+                    A: "NAT Estático",
+                    B: "NAT Dinámico",
+                    C: "PAT",
+                    D: "NAT de Proveedor (CGN)"
+                },
+                correcta: "B",
+                explicacion: "La NAT Dinámica (Dynamic NAT) utiliza un conjunto (pool) de direcciones públicas y las asigna según el orden de llegada a los dispositivos internos que solicitan acceso. [cite: 204]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "¿Cuál es el propósito de NAT64?",
+                opciones: {
+                    A: "Traducir direcciones IPv6 privadas a IPv6 públicas.",
+                    B: "Traducir protocolos entre redes de solo IPv6 y redes de solo IPv4.",
+                    C: "Conservar las direcciones IPv6, que son escasas.",
+                    D: "Reemplazar completamente a NAT para IPv4."
+                },
+                correcta: "B",
+                explicacion: "IPv6 no necesita NAT para conservar direcciones. NAT64 es un mecanismo de transición que proporciona traducción de protocolos entre redes de solo IPv6 y redes de solo IPv4. [cite: 514, 517]"
+            },
+            {
+                module: "Módulo 5: NAT",
+                pregunta: "¿Qué comando define un grupo (pool) de direcciones públicas para usar en NAT Dinámico?",
+                opciones: {
+                    A: "ip nat pool <nombre> <ip-inicio> <ip-fin> netmask <máscara>",
+                    B: "ip nat inside source list <acl> pool <nombre>",
+                    C: "ip nat inside source static <local> <global>",
+                    D: "access-list <num> permit <red>"
+                },
+                correcta: "A",
+                explicacion: "El comando `ip nat pool` se utiliza en el modo de configuración global para definir el conjunto (pool) de direcciones globales internas que se usarán para la traducción. [cite: 328, 331]"
+            },
+
+            // --- Módulo 6: VPN e IPsec ---
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "¿Qué tipo de VPN se crea dinámicamente para conectar a un solo usuario (ej. un teletrabajador) a la red corporativa?",
+                opciones: {
+                    A: "VPN de sitio a sitio (Site-to-site)",
+                    B: "VPN de acceso remoto (Remote-access)",
+                    C: "VPN MPLS",
+                    D: "VPN GRE"
+                },
+                correcta: "B",
+                explicacion: "Una VPN de acceso remoto se crea dinámicamente para establecer una conexión segura entre un cliente (usuario remoto) y un dispositivo de terminación VPN de la empresa. [cite: 2180, 2189]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "Una VPN de Acceso Remoto que *no* requiere la instalación de software cliente y funciona a través de un navegador web, utiliza comúnmente:",
+                opciones: {
+                    A: "IPsec",
+                    B: "GRE",
+                    C: "SSL",
+                    D: "DMVPN"
+                },
+                correcta: "C",
+                explicacion: "Una conexión VPN *sin cliente* (clientless) se asegura utilizando una conexión SSL a través de un navegador web estándar. [cite: 2191]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "¿Qué es DMVPN (Dynamic Multipoint VPN)?",
+                opciones: {
+                    A: "Un protocolo de encriptación que compite con 3DES.",
+                    B: "Un tipo de VPN sin cliente para navegadores.",
+                    C: "Una solución de Cisco para crear VPNs escalables (hub-and-spoke) de forma fácil y dinámica.",
+                    D: "Un estándar para conectar VPNs de diferentes proveedores."
+                },
+                correcta: "C",
+                explicacion: "La VPN dinámica multipunto (DMVPN) es una solución de Cisco para crear VPNs múltiples de forma fácil, dinámica y escalable, simplificando la configuración del túnel. [cite: 2240, 2241]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "¿Qué componente del framework IPsec proporciona *integridad* y *autenticación*, pero **NO** confidencialidad (cifrado)?",
+                opciones: {
+                    A: "ESP (Encapsulating Security Protocol)",
+                    B: "AH (Authentication Header)",
+                    C: "IKE (Internet Key Exchange)",
+                    D: "Diffie-Hellman (DH)"
+                },
+                correcta: "B",
+                explicacion: "El Encabezado de autenticación (AH) es apropiado solo cuando la confidencialidad no es requerida. ESP, en cambio, proporciona tanto confidencialidad como autenticación. [cite: 2281, 2283, 2284]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "¿Cuál de estos algoritmos de encriptación se considera el más seguro y moderno?",
+                opciones: {
+                    A: "DES (56 bits)",
+                    B: "3DES",
+                    C: "AES (128, 192, o 256 bits)",
+                    D: "MD5"
+                },
+                correcta: "C",
+                explicacion: "AES (Advanced Encryption Standard) ofrece longitudes de clave de 128, 192 y 256 bits y es el estándar de cifrado más fuerte y moderno comparado con DES y 3DES. MD5 es un algoritmo de integridad (hash), no de cifrado. [cite: 2290, 2292]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "¿Qué algoritmo se utiliza dentro de IPsec para permitir que dos partes establezcan una clave secreta compartida a través de un canal inseguro?",
+                opciones: {
+                    A: "SHA",
+                    B: "Diffie-Hellman (DH)",
+                    C: "PSK (Pre-Shared Key)",
+                    D: "ESP"
+                },
+                correcta: "B",
+                explicacion: "Diffie-Hellman (DH) es el algoritmo que proporciona un método para que dos pares establezcan una clave secreta compartida (que luego se usa para el cifrado) a través de un canal inseguro como Internet. [cite: 2274, 2310]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "En una VPN, ¿cuál es uno de los principales beneficios de usar IPsec sobre SSL?",
+                opciones: {
+                    A: "IPsec es más fácil de configurar para usuarios sin experiencia.",
+                    B: "IPsec puede funcionar sin instalar un software cliente.",
+                    C: "IPsec es compatible con todas las aplicaciones basadas en IP.",
+                    D: "IPsec tiene menor fuerza de autenticación."
+                },
+                correcta: "C",
+                explicacion: "La ventaja de IPsec es que es extensivo y compatible con *todas* las aplicaciones basadas en IP. Las VPN SSL a menudo se limitan solo a aplicaciones basadas en web o archivos compartidos. [cite: 2201, 2202]"
+            },
+            {
+                module: "Módulo 6: VPN",
+                pregunta: "¿Qué protocolo de túnel VPN básico y *no seguro* se usa a menudo para encapsular tráfico multicast y broadcast?",
+                opciones: {
+                    A: "IPsec",
+                    B: "SSL",
+                    C: "Generic Routing Encapsulation (GRE)",
+                    D: "Layer 2 Tunneling Protocol (L2TP)"
+                },
+                correcta: "C",
+                explicacion: "Generic Routing Encapsulation (GRE) es un protocolo de túnel básico que *no es seguro* por sí mismo, pero es valioso porque puede encapsular múltiples protocolos de capa de red, así como tráfico multicast y broadcast. [cite: 2221, 2222, 2223]"
+            },
+
+            // --- Módulo 7: Administración de Redes ---
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "¿Qué comando de Cisco IOS se utiliza para deshabilitar CDP globalmente en un dispositivo?",
+                opciones: {
+                    A: "no cdp enable (en modo de interfaz)",
+                    B: "no cdp run (en modo de config. global)",
+                    C: "show cdp neighbors",
+                    D: "cdp stop"
+                },
+                correcta: "B",
+                explicacion: "CDP se puede deshabilitar para todas las interfaces en el dispositivo con el comando `no cdp run` en el modo de configuración global. [cite: 786]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "En NTP, si un servidor está en el Estrato 2, ¿qué significa esto?",
+                opciones: {
+                    A: "Es una fuente de tiempo autorizada (reloj atómico).",
+                    B: "Está conectado directamente a una fuente de tiempo autorizada.",
+                    C: "Está sincronizado con un dispositivo de Estrato 1.",
+                    D: "No está sincronizado."
+                },
+                correcta: "C",
+                explicacion: "Las redes NTP son jerárquicas. Estrato 0 es la fuente autorizada. Estrato 1 está conectado al Estrato 0. Estrato 2 está conectado al Estrato 1. Por lo tanto, un dispositivo de Estrato 2 se sincroniza con un dispositivo de Estrato 1. [cite: 887, 893, 895, 896]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "¿Qué puerto UDP utiliza el protocolo Syslog para enviar mensajes de notificación de eventos?",
+                opciones: {
+                    A: "Puerto UDP 161",
+                    B: "Puerto UDP 123",
+                    C: "Puerto UDP 514",
+                    D: "Puerto TCP 22"
+                },
+                correcta: "C",
+                explicacion: "Syslog utiliza el puerto UDP 514 para enviar mensajes de notificación de eventos a través de redes IP a los recopiladores de mensajes (servidores Syslog). [cite: 1038]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "¿Cuál es el nivel de gravedad de Syslog MÁS crítico?",
+                opciones: {
+                    A: "Nivel 7 (Debugging)",
+                    B: "Nivel 6 (Informational)",
+                    C: "Nivel 1 (Alert)",
+                    D: "Nivel 0 (Emergency)"
+                },
+                correcta: "D",
+                explicacion: "En Syslog, cuanto más bajo es el número de nivel, más crítica es la alarma. El Nivel 0 (Emergency) es el más alto, indicando que el sistema no se puede usar. [cite: 1057, 1063, 1065]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "En SNMPv1 y v2c, ¿cómo se denominan las contraseñas de texto no cifrado que controlan el acceso a la MIB?",
+                opciones: {
+                    A: "Cadenas de comunidad (Community Strings)",
+                    B: "Claves precompartidas (PSK)",
+                    C: "Object Identifiers (OID)",
+                    D: "Traps"
+                },
+                correcta: "A",
+                explicacion: "SNMPv1 y SNMPv2c usan cadenas de comunidad (Community Strings), que son contraseñas de texto no cifrado, para autenticar el acceso a los objetos MIB. [cite: 1000, 1001]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "¿Qué valor de registro de configuración (confreg) se utiliza durante el proceso de recuperación de contraseña de un router Cisco para que ignore el archivo de configuración de inicio (startup-config)?",
+                opciones: {
+                    A: "0x2102",
+                    B: "0x2142",
+                    C: "0x0000",
+                    D: "0xFFFF"
+                },
+                correcta: "B",
+                explicacion: "El comando `confreg 0x2142` establece el registro de configuración en 0x2142, lo que hace que el dispositivo ignore el archivo de configuración de inicio durante el arranque. [cite: 1196]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "Para actualizar la imagen IOS de un router, ¿qué comando se usa para especificar la nueva imagen que debe cargar en el próximo arranque?",
+                opciones: {
+                    A: "copy tftp: flash:",
+                    B: "boot system <ubicacion-imagen>",
+                    C: "reload",
+                    D: "show version"
+                },
+                correcta: "B",
+                explicacion: "Después de copiar la nueva imagen a la memoria flash, se usa el comando `boot system` en el modo de configuración global para indicarle al router qué imagen cargar en el siguiente reinicio. [cite: 1284, 1287]"
+            },
+            {
+                module: "Módulo 7: Admin.",
+                pregunta: "¿Qué comando se utiliza para habilitar LLDP en una interfaz específica tanto para transmitir como para recibir paquetes?",
+                opciones: {
+                    A: "lldp run (en modo global)",
+                    B: "lldp enable (en modo global)",
+                    C: "lldp transmit y lldp receive (en modo de interfaz)",
+                    D: "show lldp neighbors"
+                },
+                correcta: "C",
+                explicacion: "Mientras que `lldp run` habilita el protocolo globalmente, LLDP debe configurarse por separado en cada interfaz para transmitir (`lldp transmit`) y recibir (`lldp receive`) paquetes. [cite: 821, 823]"
+            },
+
+            // --- Módulo 8: Diseño de Redes ---
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "En el diseño jerárquico de 3 capas, ¿qué capa es responsable de aplicar políticas, QoS y limitar los dominios de broadcast?",
+                opciones: {
+                    A: "Capa de Acceso (Access)",
+                    B: "Capa de Distribución (Distribution)",
+                    C: "Capa de Núcleo (Core)",
+                    D: "Capa de Red (Network)"
+                },
+                correcta: "B",
+                explicacion: "La capa de Distribución implementa el enrutamiento, la calidad del servicio (QoS) y la seguridad. Agrega redes y limita los dominios de difusión de Capa 2. [cite: 2504, 2505]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "¿Cómo se llama un diseño jerárquico que combina las capas de Núcleo y Distribución en una sola?",
+                opciones: {
+                    A: "Diseño de tres niveles",
+                    B: "Diseño de núcleo colapsado (o de dos niveles)",
+                    C: "Diseño de capa de acceso",
+                    D: "Diseño de estrella extendida"
+                },
+                correcta: "B",
+                explicacion: "En ubicaciones de campus más pequeñas, donde no se requiere una distribución y núcleo separados, se utiliza un diseño de dos niveles, también conocido como 'diseño de red central colapsado'. [cite: 2515, 2517]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "¿Qué protocolo es necesario para gestionar las rutas redundantes en una red Ethernet conmutada y evitar bucles lógicos?",
+                opciones: {
+                    A: "EtherChannel",
+                    B: "OSPF",
+                    C: "Protocolo de árbol de expansión (STP)",
+                    D: "VLAN Trunking Protocol (VTP)"
+                },
+                correcta: "C",
+                explicacion: "Las rutas redundantes en una red Ethernet pueden causar bucles de Capa 2. Por esta razón, se necesita el protocolo de árbol de expansión (STP) para bloquear lógicamente esos bucles. [cite: 2536, 2537]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "¿Qué característica de un switch permite suministrar energía a dispositivos como teléfonos IP y puntos de acceso a través del cable de red?",
+                opciones: {
+                    A: "Switching Multicapa",
+                    B: "Factor de forma modular",
+                    C: "Power over Ethernet (PoE)",
+                    D: "Alta densidad de puertos"
+                },
+                correcta: "C",
+                explicacion: "Power over Ethernet (PoE) permite que el switch suministre energía a un dispositivo por el cableado de Ethernet existente. [cite: 2602]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "¿Qué tipo de switch acepta 'tarjetas de línea' reemplazables en campo para agregar más puertos o nuevas funciones?",
+                opciones: {
+                    A: "Switch de configuración fija",
+                    B: "Switch de configuración modular",
+                    C: "Switch apilable (Stackable)",
+                    D: "Switch de acceso"
+                },
+                correcta: "B",
+                explicacion: "El chasis de los switches modulares acepta tarjetas de línea reemplazables en campo, a diferencia de los switches de configuración fija. [cite: 2580, 2582]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "Los switches que pueden tomar decisiones de reenvío basadas en información de Capa 3 (direcciones IP) se denominan:",
+                opciones: {
+                    A: "Switches de Capa 2",
+                    B: "Hubs",
+                    C: "Switches multicapa",
+                    D: "Switches de acceso"
+                },
+                correcta: "C",
+                explicacion: "Los switches multicapa se implementan en las capas de núcleo y distribución. Pueden reenviar paquetes IP (Capa 3) a una velocidad cercana a la del reenvío de Capa 2. [cite: 2605, 2606]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "¿Qué función principal cumple un router que un switch de Capa 2 no puede?",
+                opciones: {
+                    A: "Reenviar tráfico basado en direcciones MAC.",
+                    B: "Crear una tabla de direcciones MAC.",
+                    C: "Ofrecer contención de broadcast (limitar broadcasts).",
+                    D: "Proporcionar conectividad a los usuarios finales."
+                },
+                correcta: "C",
+                explicacion: "Los routers (y los switches multicapa) cumplen la función de ofrecer contención de broadcast, limitándolos a la red local. Un switch de Capa 2 propaga los broadcasts a todos los puertos de la misma VLAN. [cite: 2634]"
+            },
+            {
+                module: "Módulo 8: Diseño",
+                pregunta: "¿Qué protocolo de enrutamiento avanzado de estado de vínculo se utiliza en redes grandes y admite un diseño jerárquico mediante 'áreas'?",
+                opciones: {
+                    A: "RIP",
+                    B: "EIGRP",
+                    C: "Open Shortest Path First (OSPF)",
+                    D: "STP"
+                },
+                correcta: "C",
+                explicacion: "Los protocolos de enrutamiento avanzados, como Open Shortest Path First (OSPF), se utilizan en redes grandes. OSPF es un protocolo de enrutamiento de estado de vínculo que utiliza áreas para admitir redes jerárquicas. [cite: 2560, 2561]"
+            },
+
+            // --- Módulo 9: Solución de Problemas ---
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "¿Qué tipo de documentación de red muestra las direcciones IP, subredes, VLANs y protocolos de enrutamiento?",
+                opciones: {
+                    A: "Topología física",
+                    B: "Topología lógica",
+                    C: "Línea de base (Baseline)",
+                    D: "Documentación del dispositivo"
+                },
+                correcta: "B",
+                explicacion: "La topología lógica muestra cómo fluye la información e incluye detalles como direccionamiento IP, VLANs y protocolos. La topología física muestra la ubicación y el cableado de los dispositivos. [cite: 1565, 1567]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "Se sospecha que el problema es un cable defectuoso. Se decide empezar probando el cableado y luego revisar las luces del puerto. ¿Qué método de solución de problemas se está usando?",
+                opciones: {
+                    A: "Ascendente (Bottom-up)",
+                    B: "Descendente (Top-down)",
+                    C: "Divide y vencerás",
+                    D: "Deducción informada"
+                },
+                correcta: "A",
+                explicacion: "El método ascendente (Bottom-up) comienza en la Capa 1 (Física). Es un buen método cuando se sospecha que el problema es físico, como el cableado. [cite: 1700, 1701]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "Se sospecha que un problema es de software (ej. un problema de DNS). Se decide empezar probando la aplicación y luego bajar por las capas. ¿Qué método es este?",
+                opciones: {
+                    A: "Ascendente (Bottom-up)",
+                    B: "Descendente (Top-down)",
+                    C: "Divide y vencerás",
+                    D: "Sustitución"
+                },
+                correcta: "B",
+                explicacion: "El método descendente (Top-down) comienza en la Capa 7 (Aplicación). Se usa para problemas más simples o cuando se cree que el problema está en el software. [cite: 1702, 1703]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "Un técnico utiliza la herramienta `ping` y `traceroute` para verificar la conectividad. ¿En qué etapa del proceso de 7 pasos se encuentra?",
+                opciones: {
+                    A: "Recopilar información",
+                    B: "Proponer hipótesis",
+                    C: "Definir el problema",
+                    D: "Resolver el problema"
+                },
+                correcta: "A",
+                explicacion: "El segundo paso del proceso es Recopilar Información. Comandos como `ping` y `traceroute` son herramientas comunes que se utilizan para recopilar los síntomas de un problema de red. [cite: 1638, 1639, 1674, 1677, 1679]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "Un puerto FastEthernet está configurado como `Full-duplex` y el dispositivo conectado está en `Half-duplex`. ¿Qué tipo de problema es probable que ocurra?",
+                opciones: {
+                    A: "Un bucle de STP.",
+                    B: "Errores de encapsulación.",
+                    C: "Una discrepancia de dúplex, causando colisiones tardías y rendimiento lento.",
+                    D: "El puerto se apagará (err-disabled)."
+                },
+                correcta: "C",
+                explicacion: "Pueden producirse problemas cuando hay una discrepancia dúplex (dúplex mismatch). Esto comúnmente causa un rendimiento muy bajo y errores de entrada como colisiones. [cite: 1954]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "Un usuario no puede acceder a un servidor web. El técnico revisa la ACL en el router y ve que falta una entrada `permit` para el puerto TCP 80. ¿En qué capa del modelo OSI se encuentra este problema?",
+                opciones: {
+                    A: "Capa 2 (Vínculo de Datos)",
+                    B: "Capa 3 (Red)",
+                    C: "Capa 4 (Transporte)",
+                    D: "Capa 7 (Aplicación)"
+                },
+                correcta: "C",
+                explicacion: "Las ACLs que filtran por números de puerto (como TCP 80 para HTTP) operan en la Capa 4 (Transporte). Una ACL mal configurada es un problema común de esta capa. [cite: 1873, 1885]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "Un PC no puede obtener una dirección IPv6 usando SLAAC. El técnico ejecuta `show ipv6 interface` en el router y nota que falta la dirección de grupo `FF02::2`. ¿Cuál es la causa probable?",
+                opciones: {
+                    A: "El PC tiene el firewall activado.",
+                    B: "El router no tiene el comando `ipv6 unicast-routing` habilitado.",
+                    C: "Hay una ACL bloqueando el tráfico.",
+                    D: "El cable de red del PC está desconectado."
+                },
+                correcta: "B",
+                explicacion: "Para que un router actúe como router IPv6 (y envíe anuncios RA para SLAAC), debe tener habilitado el enrutamiento IPv6. La falta del grupo `FF02::2` (todos los routers) indica que `ipv6 unicast-routing` no está configurado. [cite: 1971, 1972, 1973]"
+            },
+            {
+                module: "Módulo 9: T-Shoot",
+                pregunta: "¿Qué herramienta de software puede capturar y mostrar el contenido de los paquetes desde la capa física hasta la capa de aplicación?",
+                opciones: {
+                    A: "Un servidor Syslog",
+                    B: "Un NMS (Sistema de Administración de Red)",
+                    C: "Un analizador de protocolos (como Wireshark)",
+                    D: "Un multímetro digital"
+                },
+                correcta: "C",
+                explicacion: "Un analizador de protocolos (como Wireshark) puede capturar y mostrar la información de la capa física hasta la de aplicación contenida en un paquete, ayudando a resolver problemas de rendimiento. [cite: 1734, 1735]"
+            }
+        ];
+
+
+        // Variables Globales
+        let currentQuizQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // Elementos del DOM
+        const setupContainer = document.getElementById('setup-container');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsContainer = document.getElementById('results-container');
+        
+        const numQuestionsInput = document.getElementById('num-questions-input');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        const moduleName = document.getElementById('module-name');
+        const questionCounter = document.getElementById('question-counter');
+        const questionContent = document.getElementById('question-content');
+        
+        const validateBtn = document.getElementById('validate-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackDiv = document.getElementById('feedback-div');
+        
+        const scoreText = document.getElementById('score-text');
+        const chartCorrect = document.getElementById('chart-correct');
+        const chartIncorrect = document.getElementById('chart-incorrect');
+
+        // --- Lógica del Cuestionario ---
+
+        // 1. Iniciar el Cuestionario
+        startBtn.addEventListener('click', () => {
+            const num = parseInt(numQuestionsInput.value);
+            
+            if (isNaN(num) || num <= 0 || num > questionBank.length) {
+                alert(`Por favor, ingresa un número entre 1 y ${questionBank.length}.`);
+                return;
+            }
+
+            // Resetear estado
+            currentQuestionIndex = 0;
+            score = 0;
+            currentQuizQuestions = selectRandomQuestions(questionBank, num);
+            
+            // Ocultar configuración y mostrar cuestionario
+            setupContainer.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            quizContainer.style.display = 'block';
+
+            displayQuestion(currentQuestionIndex);
+        });
+
+        // 2. Seleccionar Preguntas Aleatorias
+        function selectRandomQuestions(bank, num) {
+            const shuffled = [...bank].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, num);
+        }
+
+        // 3. Mostrar una Pregunta
+        function displayQuestion(index) {
+            const q = currentQuizQuestions[index];
+            
+            // Limpiar contenido anterior
+            questionContent.innerHTML = "";
+            feedbackDiv.innerHTML = "";
+            feedbackDiv.style.display = 'none';
+
+            // Actualizar encabezado
+            moduleName.textContent = q.module;
+            questionCounter.textContent = `Pregunta ${index + 1} de ${currentQuizQuestions.length}`;
+
+            // Crear HTML de la pregunta
+            const questionText = document.createElement('p');
+            questionText.textContent = q.pregunta;
+            questionContent.appendChild(questionText);
+
+            // Crear HTML de las opciones
+            for (const key in q.opciones) {
+                const label = document.createElement('label');
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'option';
+                input.value = key;
+                
+                input.addEventListener('change', () => {
+                    // Resaltar la opción seleccionada
+                    document.querySelectorAll('#question-content label').forEach(l => l.classList.remove('selected'));
+                    label.classList.add('selected');
+                });
+                
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(` ${q.opciones[key]}`));
+                questionContent.appendChild(label);
+            }
+
+            // Resetear botones
+            validateBtn.disabled = false;
+            validateBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+        }
+
+        // 4. Validar Respuesta
+        validateBtn.addEventListener('click', () => {
+            const selectedInput = document.querySelector('input[name="option"]:checked');
+            
+            if (!selectedInput) {
+                feedbackDiv.textContent = "Por favor, selecciona una respuesta.";
+                feedbackDiv.className = "feedback incorrect";
+                feedbackDiv.style.display = 'block';
+                return;
+            }
+
+            const selectedValue = selectedInput.value;
+            const q = currentQuizQuestions[currentQuestionIndex];
+            
+            // Deshabilitar todas las opciones
+            document.querySelectorAll('input[name="option"]').forEach(input => {
+                input.disabled = true;
+            });
+            validateBtn.disabled = true;
+            validateBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-block';
+
+            // Mostrar retroalimentación
+            if (selectedValue === q.correcta) {
+                score++;
+                feedbackDiv.innerHTML = "<strong>¡Correcto!</strong>";
+                feedbackDiv.className = "feedback correct";
+            } else {
+                feedbackDiv.innerHTML = `<strong>Incorrecto.</strong> La respuesta correcta era la <strong>${q.correcta}</strong>. <br><br><strong>Por qué:</strong> ${q.explicacion}`;
+                feedbackDiv.className = "feedback incorrect";
+            }
+            feedbackDiv.style.display = 'block';
+        });
+
+        // 5. Ir a la Siguiente Pregunta o Mostrar Resultados
+        nextBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < currentQuizQuestions.length) {
+                displayQuestion(currentQuestionIndex);
+            } else {
+                showResults();
+            }
+        });
+
+        // 6. Mostrar Resultados Finales
+        function showResults() {
+            quizContainer.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            
+            const total = currentQuizQuestions.length;
+            const incorrectCount = total - score;
+            
+            scoreText.textContent = `Puntuación: ${score} correctas y ${incorrectCount} incorrectas de ${total}.`;
+            
+            const correctPerc = (score / total) * 100;
+            const incorrectPerc = (incorrectCount / total) * 100;
+            
+            chartCorrect.style.width = `${correctPerc}%`;
+            chartCorrect.textContent = `${score} Correctas`;
+            
+            chartIncorrect.style.width = `${incorrectPerc}%`;
+            chartIncorrect.textContent = `${incorrectCount} Incorrectas`;
+        }
+
+        // 7. Reiniciar Cuestionario
+        restartBtn.addEventListener('click', () => {
+            resultsContainer.style.display = 'none';
+            setupContainer.style.display = 'block';
+            numQuestionsInput.value = "10"; // Resetear al valor por defecto
+        });
+        
+    </script>
+
+</body>
+</html>
